@@ -1,6 +1,8 @@
+import os
 import time
 import pandas as pd
 import requests
+import os
 
 def get_pca_data(resource_id: str, limit: int = 100000):
 
@@ -42,8 +44,17 @@ def get_pca_data(resource_id: str, limit: int = 100000):
     return pd.DataFrame(all_records)
 
 def save_csv(df, filename):
-    df.to_csv(filename, index=False)
-    print(f"Saved: {filename}")
+
+    # create folder if it doesn't exist
+    os.makedirs("output", exist_ok=True)
+
+    # full save path
+    path = f"output/{filename}"
+
+    # save csv
+    df.to_csv(path, index=False)
+
+    print(f"Saved: {path}")
 if __name__ == "__main__":
 
     RESOURCE_ID = "PCA_202602"
