@@ -9,37 +9,38 @@ path = os.path.join(BASE, "output", FILE)
 output_dir = os.path.join(BASE, "output")
 
 df = pd.read_parquet(path)
-#data quality checks
-def data_quality_checks(df):
-    for col in df.columns:
-        null_cnt = df[col].isnull().sum()
-        if null_cnt > 0:
-            print(f"Column '{col}' has {null_cnt} null values.")
-    if null_cnt == 0:
-        print("no null values found in the dataset.")
-    for col in df.columns:
-        col_cnt = df[col].count()
-        if col_cnt != 192000:
-            print(f"Column '{col}' has {col_cnt} non-null values, expected 192000.")
-    else:
-        print("All columns have the expected number of non-null values (192000).")
-    #changing the data types of the columns
-    df["YEAR_MONTH"] = pd.to_datetime(df["YEAR_MONTH"], format="%Y%m")
-    changed_data_type = [
-    "BNF_PARAGRAPH_CODE",
-    "BNF_SECTION_CODE",
-    "BNF_CHAPTER_CODE",
-    "PREP_CLASS",
-    "PRESCRIBED_PREP_CLASS"]
-    for col in changed_data_type:
-        if col in df.columns:
-            df[col] = df[col].astype(int)
-    #adding the dervied columns
-    df["COST_PER_ITEM"] = df["NIC"] / df["TOTAL_QUANTITY"]
-    #DELETING THE UNNECESSARY COLUMNS
-    df = df.drop(columns=["SOURCE_FILE"])
-    print("Data quality checks completed successfully.")
+def silver_transformation(df):
+    #quality checks
+    try:
+        nulls = df.isnull().sum()
+        if (nulls>0).any():
+            print("nulls has been found")
+        #fixing data types
+        df["YEAR_MONTH"] = pd.to_datetime(df["YEAR_MONTH"], format="%Y%m")
+        for col in ["BNF_PARAGRAPH_CODE",
+        "BNF_SECTION_CODE",
+        "BNF_CHAPTER_CODE",
+        "PREP_CLASS",
+        "PRESCRIBED_PREP_CLASS"]:
+            if col in df.columns:
+                df[col] = df[col].astype("int64")
+        #adding dervied columns
+        df["COST_PER_ITEM"] = (df["NIC"] / df["ITEMS"]).round(4)
+        df["PREP_CLASS_LABEL"] = df["PREP_CLASS"].map({1:"Generic",2:"Branded Generic",3:"Branded", 4:"Specially Manufactured"})
+        df["HAS_GENERINC_EQUIVALENT"] = (df["GENERIC_BNF_EQUIVALENT_CODE"].notna()&(df["GENERIC_BNF_EQUIVALENT_CODE"] != df["BNF_PRESENTATION_CODE"])).map({True: "Yes", False: "No"})
+        #REMOVE uncessary columns
+        df = df.drop(columns=["SOURCE_FILE"])
+        #changing to lowercase
+        df.columns = df.columns.str.lower()
+        #convert region_name to title case
+        if "region_name" in df.columns:
+            df["region_name"] = df["region_name"].str.title()
+        #title the data frame
+        for col in df.columns:
+            if df[col].dtype == "object":
+                df[col] = df[col].str.title()
+    except Exception as e:
+        print(f"An error occurred during transformation: {e}")
     return df
-new_df =data_quality_checks(df)
-print(new_df.head())
-
+sliver_df = silver_transformation(df)
+print(sliver_df.head())
