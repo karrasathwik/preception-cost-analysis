@@ -32,9 +32,6 @@ def silver_transformation(df):
         df = df.drop(columns=["SOURCE_FILE"])
         #changing to lowercase
         df.columns = df.columns.str.lower()
-        #convert region_name to title case
-        if "region_name" in df.columns:
-            df["region_name"] = df["region_name"].str.title()
         #title the data frame
         for col in df.columns:
             if df[col].dtype == "object":
@@ -42,5 +39,14 @@ def silver_transformation(df):
     except Exception as e:
         print(f"An error occurred during transformation: {e}")
     return df
+def save_parquet(df,filename):
+    try:
+        os.makedirs("sliver_output",exist_ok = True)
+        path = os.path.join("sliver_output",filename)
+        df.to_parquet(path,index=False)
+        print(f"file saved sucesfully at{path}")
+    except Exception as e:
+        print(f"An error occurred while saving the file: {e}")
 sliver_df = silver_transformation(df)
 print(sliver_df.head())
+save_parquet(sliver_df,"nhs_pca_2026_q1_silver.parquet")

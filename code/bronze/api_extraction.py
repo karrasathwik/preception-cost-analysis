@@ -53,10 +53,10 @@ def get_pca_data(resource_id: str, limit: int = 200000):
 def save_parquet(df, filename):
 
     # Create output folder if missing
-    os.makedirs("output", exist_ok=True)
+    os.makedirs("outputs/bronze", exist_ok=True)
 
     # Full file path
-    path = f"output/{filename}"
+    path = f"outputs/bronze/{filename}"
 
     # Save parquet
     df.to_parquet(
