@@ -1,5 +1,11 @@
 import os
 import pandas as pd
+import boto3
+import io
+from src.S3connection import get_s3_client, upload_file_to_s3
+from botocore.exceptions import ClientError
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE = r"C:\Users\sathw\preception-cost-analysis"
 FILE = "nhs_pca_2026_q1.parquet"
@@ -9,6 +15,7 @@ path = os.path.join(BASE, "output", FILE)
 output_dir = os.path.join(BASE, "output")
 
 df = pd.read_parquet(path)
+
 def silver_transformation(df):
     #quality checks
     try:

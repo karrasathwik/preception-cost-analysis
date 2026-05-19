@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
 
-#load_dotenv(r"C:\Users\sathw\preception-cost-analysis\.env")
+
 
 
 def get_pca_data(resource_id: str, limit: int = 200000):
@@ -58,8 +58,8 @@ def get_pca_data(resource_id: str, limit: int = 200000):
 
 
 def save_S3(df,filename):
-    bucket_name = os.getenv('S3_BUCKET')
-    s3_key = f"bronze/{filename}"
+    bucket_name = 'nhs-prescription-project'
+    s3_key = f"silver/{filename}"   
     try:
         buffer = io.BytesIO()
         df.to_parquet(buffer, index=False)
@@ -67,10 +67,10 @@ def save_S3(df,filename):
         #upload to S3
         s3_client = get_s3_client()
         s3_client.put_object(
-            bucket=bucket_name,
-            object_name=s3_key,
-            body = buffer.getvalue(),
-            ContentType = "application/x-parquet"
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=buffer.getvalue(),
+            ContentType="application/x-parquet"
         )
         print(f"file {filename} uploaded successfully to bucket {bucket_name} as {s3_key}")
     except ClientError as e:
@@ -116,6 +116,6 @@ if __name__ == "__main__":
     print(final_df.head())
 
     # Save final dataset
-    save_S3(final_df, "nhs_pca_2026_c1.parquet")
+    save_S3(final_df, "nhs_pca_2026_raw.parquet")
 
     print("\nNHS PCA extraction completed successfully.")

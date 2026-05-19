@@ -8,13 +8,12 @@ def get_s3_client():
     try:
         client = boto3.client(
             's3',
-           aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY'),
-            region_name = os.getenv('AWS_REGION'),
-            bucket_name = os.getenv('S3_BUCKET')
-        )
+           aws_access_key_id ="AKIARO6E62INFWBTL7TP",
+            aws_secret_access_key = "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",
+            region_name ="eu-north-1")
+            #bucket_name = os.getenv('S3_BUCKET')
         print("s3 client created successfully")
-        return client
+        return client 
     except NoCredentialsError:
         print("Credentials not found.please check your .env file")
     except Exception as e:
