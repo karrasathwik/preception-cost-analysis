@@ -7,15 +7,6 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 load_dotenv()
 
-BASE = r"C:\Users\sathw\preception-cost-analysis"
-FILE = "nhs_pca_2026_q1.parquet"
-path = os.path.join(BASE, "output", FILE)
-
-# Check what files exist in output directory
-output_dir = os.path.join(BASE, "output")
-
-df = pd.read_parquet(path)
-
 def silver_transformation(df):
     #quality checks
     try:
@@ -46,14 +37,44 @@ def silver_transformation(df):
     except Exception as e:
         print(f"An error occurred during transformation: {e}")
     return df
-def save_parquet(df,filename):
+
+def read_parquet(bucket_name, s3_key):
+    client = get_s3_client()
+    print("connection has established successfully to s3")
     try:
-        os.makedirs("sliver_output",exist_ok = True)
-        path = os.path.join("sliver_output",filename)
-        df.to_parquet(path,index=False)
-        print(f"file saved sucesfully at{path}")
+        response = client.get_object(Bucket = bucket_name,Key = s3_key)
+        df = pd.read_parquet(io.BytesIO(response["Body"].read()))
+        return df
+    except ClientError as e:
+        print(f"An error occured while readin the file from S3:{e}")
     except Exception as e:
-        print(f"An error occurred while saving the file: {e}")
-sliver_df = silver_transformation(df)
-print(sliver_df.head())
-save_parquet(sliver_df,"nhs_pca_2026_q1_silver.parquet")
+        print(f"An unxepected error occured ",{e})
+
+def save_back_s3(df,filename):
+    bucket_name = "nhs-prescription-project"
+    s3_key = f"silver/{filename}"
+    try:
+        buffer = io.BytesIO()
+        df.to_parquet(buffer,index = False)
+        buffer.seek(0)
+        s3_client = get_s3_client()
+        s3_client.put_object(
+            bucket_name = bucket_name,
+            Key = s3_key,
+            Body = buffer.getvalue(),
+            ContentType = "application/x-parquet"
+        )
+        print(f"file {filename} uploades done successfully to bucket {bucket_name} as {s3_key}")
+    except ClientError as e:
+        print(f"An error occured during uploading the file:{e}")
+    except Exception as e:
+        print(f"An unexpted general error has occured during the uploading the file:{e}")
+if __name__ == "__main__":
+    print("starting transformation process...")
+    Bucket_name = "nhs-prescription-project"
+    s3_key = "bronze/nhs_pca_2026_raw.parquet"
+    read_data = read_parquet(Bucket_name, s3_key)
+    print("data has sent to read the data")
+    #send the data to transformation function
+    save_back_s3(df, "nhs_pca_2026_cleaned.parquet")
+    print("\n transformation process completed successfully")
