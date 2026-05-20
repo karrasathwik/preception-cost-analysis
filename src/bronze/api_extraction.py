@@ -59,7 +59,7 @@ def get_pca_data(resource_id: str, limit: int = 200000):
 
 def save_S3(df,filename):
     bucket_name = 'nhs-prescription-project'
-    s3_key = f"silver/{filename}"   
+    s3_key = f"bronze/{filename}"   
     try:
         buffer = io.BytesIO()
         df.to_parquet(buffer, index=False)

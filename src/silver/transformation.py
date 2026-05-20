@@ -38,7 +38,7 @@ def silver_transformation(df):
         print(f"An error occurred during transformation: {e}")
     return df
 
-def read_parquet(bucket_name, s3_key):
+def read_data_parquet(bucket_name, s3_key):
     client = get_s3_client()
     print("connection has established successfully to s3")
     try:
@@ -46,7 +46,7 @@ def read_parquet(bucket_name, s3_key):
         df = pd.read_parquet(io.BytesIO(response["Body"].read()))
         return df
     except ClientError as e:
-        print(f"An error occured while readin the file from S3:{e}")
+        print(f"An error occured while reading the file from S3:{e}")
     except Exception as e:
         print(f"An unxepected error occured ",{e})
 
@@ -59,7 +59,7 @@ def save_back_s3(df,filename):
         buffer.seek(0)
         s3_client = get_s3_client()
         s3_client.put_object(
-            bucket_name = bucket_name,
+            Bucket= bucket_name,
             Key = s3_key,
             Body = buffer.getvalue(),
             ContentType = "application/x-parquet"
@@ -73,8 +73,8 @@ if __name__ == "__main__":
     print("starting transformation process...")
     Bucket_name = "nhs-prescription-project"
     s3_key = "bronze/nhs_pca_2026_raw.parquet"
-    read_data = read_parquet(Bucket_name, s3_key)
-    print("data has sent to read the data")
+    read_data = read_data_parquet(Bucket_name, s3_key)
+    print("data has sent to reading  the data")
     #send the data to transformation function
-    save_back_s3(df, "nhs_pca_2026_cleaned.parquet")
+    save_back_s3(read_data, "nhs_pca_2026_cleaned.parquet")
     print("\n transformation process completed successfully")
