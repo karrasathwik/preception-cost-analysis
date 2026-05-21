@@ -9,6 +9,8 @@ load_dotenv()
 
 def silver_transformation(df):
     #quality checks
+    print("data before transformation")
+    print(df.head())
     try:
         nulls = df.isnull().sum()
         if (nulls>0).any():
@@ -34,6 +36,11 @@ def silver_transformation(df):
         for col in df.columns:
             if df[col].dtype == "object":
                 df[col] = df[col].str.title()
+        if "SOURCE_FILE" in df.columns:
+            df = df.drop(columns=["SOURCE_FILE"])
+        print("data after transformation")
+        print(df.head())
+        print(df.count())
     except Exception as e:
         print(f"An error occurred during transformation: {e}")
     return df
@@ -56,6 +63,7 @@ def save_back_s3(df,filename):
     try:
         buffer = io.BytesIO()
         df.to_parquet(buffer,index = False)
+        print(df.head())
         buffer.seek(0)
         s3_client = get_s3_client()
         s3_client.put_object(
@@ -75,6 +83,8 @@ if __name__ == "__main__":
     s3_key = "bronze/nhs_pca_2026_raw.parquet"
     read_data = read_data_parquet(Bucket_name, s3_key)
     print("data has sent to reading  the data")
+    new_data = silver_transformation(read_data)
+    print("data has sent to transformation function")
     #send the data to transformation function
-    save_back_s3(read_data, "nhs_pca_2026_cleaned.parquet")
+    save_back_s3(new_data, "nhs_pca_2026_cleaned.parquet")
     print("\n transformation process completed successfully")
