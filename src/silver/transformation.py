@@ -38,9 +38,14 @@ def silver_transformation(df):
                 df[col] = df[col].str.title()
         if "SOURCE_FILE" in df.columns:
             df = df.drop(columns=["SOURCE_FILE"])
+        df.loc[
+                df["supplier_name"].fillna("").str.strip() == "",
+                                    "supplier_name"] = "Unknown"
+        print("changed to unknown")
         print("data after transformation")
         print(df.head())
         print(df.count())
+        print(df[df["supplier_name"] == "Unknown"])
     except Exception as e:
         print(f"An error occurred during transformation: {e}")
     return df
