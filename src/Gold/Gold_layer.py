@@ -99,7 +99,7 @@ class Gold_layer:
             """
         ).df()
 
-        # IMPORTANT FIX: ensure 1 row per supplier
+        
         df = df.drop_duplicates(subset=["supplier_name"])
 
         df = self.add_surrogate_key(df, "supplier_sk")
@@ -113,7 +113,8 @@ class Gold_layer:
             name=table_name,
             con=self.engine,
             if_exists="replace",
-            index=False
+            index=False,
+            schema = "dbo"
         )
         print(f"Loaded {table_name}")
 
@@ -165,7 +166,7 @@ class Gold_layer:
             on="supplier_name",
             how="left"
         )
-        print(fact_df)
+        print("fact_dim:",fact_df)
         # fact
         fact_df = fact_df.drop(columns=[
             "year_month",
@@ -179,12 +180,13 @@ class Gold_layer:
         fact_df = self.add_surrogate_key(fact_df, "fact_sk")
 
         print("Final fact rows:", len(fact_df))
+        print(fact_df.head())
 
         # sanity check
         print("Duplicate rows:", fact_df.duplicated().sum())
 
         self.load_to_sql(fact_df, "fact_table")
-        print(fact_df)
+        #print(fact_df)
         return fact_df
 
     # ---------------- RUN ----------------
@@ -196,7 +198,7 @@ class Gold_layer:
         dim_drug_df = self.dim_drug(s3_path)
         dim_supplier_df = self.dim_supplier(s3_path)
 
-        self.dim_fact(
+        dim_facts = self.dim_fact(
             s3_path,
             dim_date_df,
             dim_location_df,
